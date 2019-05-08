@@ -1,0 +1,21 @@
+{
+  "name": "trayjs",
+  "version": "0.1.0",
+  "description": "command line tool to move files quickly",
+  "main": "index.js",
+  "repository": "https://github.com/Kielan/.tray.git",
+  "author": "Kielan <ki.lemons@gmail.com>",
+  "license": "MIT",
+  "private": false,
+  "scripts": {
+    "test": "jest"
+  },
+  "dependencies": {
+    "commander": "^2.20.0",
+    "fs-extra": "^7.0.1",
+    "resolve-cwd": "^3.0.0"
+  },
+  "devDependencies": {
+    "jest": "^24.7.1"
+  }
+}
