@@ -1,3 +1,5 @@
 # Dependency directories
 node_modules
 yarn.lock
+__mocks__backup__
+config.js
