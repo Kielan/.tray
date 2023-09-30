@@ -537,7 +537,7 @@ void txt_file_modified_ignore(Txt *txt)
   }
 
   lib_strncpy(file, text->filepath, FILE_MAX);
-  lib_path_abs(file, ID_DUNE_PATH_FROM_GLOBAL(&text->id));
+  lib_path_abs(file, ID_PATH_FROM_GLOBAL(&text->id));
 
   if (!lib_exists(file)) {
     return;
@@ -553,7 +553,7 @@ void txt_file_modified_ignore(Txt *txt)
 }
 
 /* Editing Util Fns */
-static void make_new_line(TextLine *line, char *newline)
+static void make_new_line(TxtLine *line, char *newline)
 {
   if (line->line) {
     mem_freen(line->line);
@@ -567,16 +567,16 @@ static void make_new_line(TextLine *line, char *newline)
   line->format = NULL;
 }
 
-static TextLine *txt_new_line(const char *str)
+static TxtLine *txt_new_line(const char *str)
 {
-  TextLine *tmp;
+  TxtLine *tmp;
 
   if (!str) {
     str = "";
   }
 
-  tmp = (TextLine *)mem_mallocn(sizeof(TextLine), "textline");
-  tmp->line = mem_mallocn(strlen(str) + 1, "textline_string");
+  tmp = (TxtLine *)mem_mallocn(sizeof(TxtLine), "txtline");
+  tmp->line = mem_mallocn(strlen(str) + 1, "txtline_string");
   tmp->format = NULL;
 
   strcpy(tmp->line, str);
@@ -587,12 +587,12 @@ static TextLine *txt_new_line(const char *str)
   return tmp;
 }
 
-static TextLine *txt_new_linen(const char *str, int n)
+static TxtLine *txt_new_linen(const char *str, int n)
 {
-  TextLine *tmp;
+  TxtLine *tmp;
 
-  tmp = (TextLine *)mem_mallocn(sizeof(TextLine), "textline");
-  tmp->line = mem_mallocn(n + 1, "textline_string");
+  tmp = (TxtLine *)mem_mallocn(sizeof(TxtLine), "txtline");
+  tmp->line = mem_mallocn(n + 1, "txtline_string");
   tmp->format = NULL;
 
   lib_strncpy(tmp->line, (str) ? str : "", n + 1);
@@ -603,25 +603,25 @@ static TextLine *txt_new_linen(const char *str, int n)
   return tmp;
 }
 
-void txt_clean_text(Text *text)
+void txt_clean_text(Txt *txt)
 {
-  TextLine **top, **bot;
+  TxtLine **top, **bot;
 
-  if (!text->lines.first) {
-    if (text->lines.last) {
-      text->lines.first = text->lines.last;
+  if (!txt->lines.first) {
+    if (txt->lines.last) {
+      txt->lines.first = txt->lines.last;
     }
     else {
-      text->lines.first = text->lines.last = txt_new_line(NULL);
+      txt->lines.first = txt->lines.last = txt_new_line(NULL);
     }
   }
 
-  if (!text->lines.last) {
-    text->lines.last = text->lines.first;
+  if (!txt->lines.last) {
+    txt->lines.last = txt->lines.first;
   }
 
-  top = (TextLine **)&text->lines.first;
-  bot = (TextLine **)&text->lines.last;
+  top = (TxtLine **)&txt->lines.first;
+  bot = (TxtLine **)&txt->lines.last;
 
   while ((*top)->prev) {
     *top = (*top)->prev;
@@ -630,26 +630,26 @@ void txt_clean_text(Text *text)
     *bot = (*bot)->next;
   }
 
-  if (!text->curl) {
-    if (text->sell) {
-      text->curl = text->sell;
+  if (!txt->curl) {
+    if (txt->sell) {
+      txt->curl = txt->sell;
     }
     else {
-      text->curl = text->lines.first;
+      txt->curl = txt->lines.first;
     }
-    text->curc = 0;
+    txt->curc = 0;
   }
 
-  if (!text->sell) {
-    text->sell = text->curl;
-    text->selc = 0;
+  if (!txt->sell) {
+    txt->sell = txt->curl;
+    txt->selc = 0;
   }
 }
 
-int txt_get_span(TextLine *from, TextLine *to)
+int txt_get_span(TxtLine *from, TxtLine *to)
 {
   int ret = 0;
-  TextLine *tmp = from;
+  TxtLine *tmp = from;
 
   if (!to || !from) {
     return 0;
@@ -686,32 +686,32 @@ int txt_get_span(TextLine *from, TextLine *to)
   return ret;
 }
 
-static void txt_make_dirty(Text *text)
+static void txt_make_dirty(Txt *txt)
 {
-  text->flags |= TXT_ISDIRTY;
+  txt->flags |= TXT_ISDIRTY;
 }
 
 /* Cursor Util Fns */
-static void txt_curs_cur(Text *text, TextLine ***linep, int **charp)
+static void txt_curs_cur(Txt *txt, TxtLine ***linep, int **charp)
 {
-  *linep = &text->curl;
-  *charp = &text->curc;
+  *linep = &txt->curl;
+  *charp = &txt->curc;
 }
 
-static void txt_curs_sel(Text *text, TextLine ***linep, int **charp)
+static void txt_curs_sel(Txt *txt, TxtLine ***linep, int **charp)
 {
-  *linep = &text->sell;
-  *charp = &text->selc;
+  *linep = &txt->sell;
+  *charp = &txt->selc;
 }
 
-bool txt_cursor_is_line_start(const Text *text)
+bool txt_cursor_is_line_start(const Txt *txt)
 {
-  return (text->selc == 0);
+  return (txt->selc == 0);
 }
 
-bool txt_cursor_is_line_end(const Text *text)
+bool txt_cursor_is_line_end(const Txt *txt)
 {
-  return (text->selc == text->sell->len);
+  return (txt->selc == txt->sell->len);
 }
 
 /* Cursor Movement Fns
@@ -719,17 +719,17 @@ bool txt_cursor_is_line_end(const Text *text)
  * note If the user moves the cursor the space containing that cursor should be popped
  * See txt_pop_first, txt_pop_last
  * Other space-types retain their own top location. */
-void txt_move_up(Text *text, const bool sel)
+void txt_move_up(Txt *txt, const bool sel)
 {
-  TextLine **linep;
+  TxtLine **linep;
   int *charp;
 
   if (sel) {
-    txt_curs_sel(text, &linep, &charp);
+    txt_curs_sel(txt, &linep, &charp);
   }
   else {
-    txt_pop_first(text);
-    txt_curs_cur(text, &linep, &charp);
+    txt_pop_first(txt);
+    txt_curs_cur(txt, &linep, &charp);
   }
   if (!*linep) {
     return;
@@ -741,25 +741,25 @@ void txt_move_up(Text *text, const bool sel)
     *charp = lib_str_utf8_offset_from_column((*linep)->line, column);
   }
   else {
-    txt_move_bol(text, sel);
+    txt_move_bol(txt, sel);
   }
 
   if (!sel) {
-    txt_pop_sel(text);
+    txt_pop_sel(txt);
   }
 }
 
-void txt_move_down(Text *text, const bool sel)
+void txt_move_down(Txt *txt, const bool sel)
 {
-  TextLine **linep;
+  TxtLine **linep;
   int *charp;
 
   if (sel) {
-    txt_curs_sel(text, &linep, &charp);
+    txt_curs_sel(txt, &linep, &charp);
   }
   else {
-    txt_pop_last(text);
-    txt_curs_cur(text, &linep, &charp);
+    txt_pop_last(txt);
+    txt_curs_cur(txt, &linep, &charp);
   }
   if (!*linep) {
     return;
@@ -771,15 +771,15 @@ void txt_move_down(Text *text, const bool sel)
     *charp = lib_str_utf8_offset_from_column((*linep)->line, column);
   }
   else {
-    txt_move_eol(text, sel);
+    txt_move_eol(txt, sel);
   }
 
   if (!sel) {
-    txt_pop_sel(text);
+    txt_pop_sel(txt);
   }
 }
 
-int txt_calc_tab_left(TextLine *tl, int ch)
+int txt_calc_tab_left(TxtLine *tl, int ch)
 {
   /* do nice left only if there are only spaces */
   int tabsize = (ch < TXT_TABSIZE) ? ch : TXT_TABSIZE;
@@ -819,18 +819,18 @@ int txt_calc_tab_right(TextLine *tl, int ch)
   return 0;
 }
 
-void txt_move_left(Text *text, const bool sel)
+void txt_move_left(Txt *txt, const bool sel)
 {
-  TextLine **linep;
+  TxtLine **linep;
   int *charp;
   int tabsize = 0;
 
   if (sel) {
-    txt_curs_sel(text, &linep, &charp);
+    txt_curs_sel(txt, &linep, &charp);
   }
   else {
-    txt_pop_first(text);
-    txt_curs_cur(text, &linep, &charp);
+    txt_pop_first(txt);
+    txt_curs_cur(txt, &linep, &charp);
   }
   if (!*linep) {
     return;
@@ -838,7 +838,7 @@ void txt_move_left(Text *text, const bool sel)
 
   if (*charp == 0) {
     if ((*linep)->prev) {
-      txt_move_up(text, sel);
+      txt_move_up(txt, sel);
       *charp = (*linep)->len;
     }
   }
@@ -863,16 +863,16 @@ void txt_move_left(Text *text, const bool sel)
   }
 }
 
-void txt_move_right(Text *text, const bool sel)
+void txt_move_right(Txt *txt, const bool sel)
 {
-  TextLine **linep;
+  TxtLine **linep;
   int *charp;
 
   if (sel) {
-    txt_curs_sel(text, &linep, &charp);
+    txt_curs_sel(txt, &linep, &charp);
   }
   else {
-    txt_pop_last(text);
+    txt_pop_last(txt);
     txt_curs_cur(text, &linep, &charp);
   }
   if (!*linep) {
@@ -881,7 +881,7 @@ void txt_move_right(Text *text, const bool sel)
 
   if (*charp == (*linep)->len) {
     if ((*linep)->next) {
-      txt_move_down(text, sel);
+      txt_move_down(txt, sel);
       *charp = 0;
     }
   }
@@ -890,7 +890,7 @@ void txt_move_right(Text *text, const bool sel)
     /* spaces hardcoded in DNA_text_types.h */
     int tabsize = 0;
 
-    if (text->flags & TXT_TABSTOSPACES) {
+    if (txt->flags & TXT_TABSTOSPACES) {
       tabsize = txt_calc_tab_right(*linep, *charp);
     }
 
@@ -907,17 +907,17 @@ void txt_move_right(Text *text, const bool sel)
   }
 }
 
-void txt_jump_left(Text *text, const bool sel, const bool use_init_step)
+void txt_jump_left(Txt *txt, const bool sel, const bool use_init_step)
 {
-  TextLine **linep;
+  TxtLine **linep;
   int *charp;
 
   if (sel) {
     txt_curs_sel(text, &linep, &charp);
   }
   else {
-    txt_pop_first(text);
-    txt_curs_cur(text, &linep, &charp);
+    txt_pop_first(txt);
+    txt_curs_cur(txt, &linep, &charp);
   }
   if (!*linep) {
     return;
@@ -931,17 +931,17 @@ void txt_jump_left(Text *text, const bool sel, const bool use_init_step)
   }
 }
 
-void txt_jump_right(Text *text, const bool sel, const bool use_init_step)
+void txt_jump_right(Txt *txt, const bool sel, const bool use_init_step)
 {
-  TextLine **linep;
+  TxtLine **linep;
   int *charp;
 
   if (sel) {
-    txt_curs_sel(text, &linep, &charp);
+    txt_curs_sel(txt, &linep, &charp);
   }
   else {
-    txt_pop_last(text);
-    txt_curs_cur(text, &linep, &charp);
+    txt_pop_last(txt);
+    txt_curs_cur(txt, &linep, &charp);
   }
   if (!*linep) {
     return;
@@ -955,16 +955,16 @@ void txt_jump_right(Text *text, const bool sel, const bool use_init_step)
   }
 }
 
-void txt_move_bol(Text *text, const bool sel)
+void txt_move_bol(Txt *txt, const bool sel)
 {
-  TextLine **linep;
+  TxtLine **linep;
   int *charp;
 
   if (sel) {
-    txt_curs_sel(text, &linep, &charp);
+    txt_curs_sel(txt, &linep, &charp);
   }
   else {
-    txt_curs_cur(text, &linep, &charp);
+    txt_curs_cur(txt, &linep, &charp);
   }
   if (!*linep) {
     return;
@@ -973,20 +973,20 @@ void txt_move_bol(Text *text, const bool sel)
   *charp = 0;
 
   if (!sel) {
-    txt_pop_sel(text);
+    txt_pop_sel(txt);
   }
 }
 
-void txt_move_eol(Text *text, const bool sel)
+void txt_move_eol(Txt *txt, const bool sel)
 {
-  TextLine **linep;
+  TxtLine **linep;
   int *charp;
 
   if (sel) {
-    txt_curs_sel(text, &linep, &charp);
+    txt_curs_sel(txt, &linep, &charp);
   }
   else {
-    txt_curs_cur(text, &linep, &charp);
+    txt_curs_cur(txt, &linep, &charp);
   }
   if (!*linep) {
     return;
@@ -999,9 +999,9 @@ void txt_move_eol(Text *text, const bool sel)
   }
 }
 
-void txt_move_bof(Text *text, const bool sel)
+void txt_move_bof(Txt *txt, const bool sel)
 {
-  TextLine **linep;
+  TxtLine **linep;
   int *charp;
 
   if (sel) {
