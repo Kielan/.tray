@@ -35,32 +35,32 @@
 
 #include "loader_read_write.h"
 
-/** Prototypes **/
-static void txt_pop_first(Text *text);
-static void txt_pop_last(Text *text);
-static void txt_delete_line(Text *text, TextLine *line);
-static void txt_delete_sel(Text *text);
-static void txt_make_dirty(Text *text);
+/* Prototypes **/
+static void txt_pop_first(Txt *txt);
+static void txt_pop_last(Txt *txt);
+static void txt_delete_line(Txt *txt, TxtLine *line);
+static void txt_delete_sel(Txt *txt);
+static void txt_make_dirty(Txt *txt);
 
-/** Text Data-Block **/
-static void text_init_data(Id *id)
+/* Txt Data-Block */
+static void txt_init_data(Id *id)
 {
-  Text *text = (Text *)id;
-  TextLine *tmp;
+  Txt *txt = (Txt *)id;
+  TxtLine *tmp;
 
-  lib_assert(MEMCMP_STRUCT_AFTER_IS_ZERO(text, id));
+  lib_assert(MEMCMP_STRUCT_AFTER_IS_ZERO(txt, id));
 
-  text->filepath = NULL;
+  txt->filepath = NULL;
 
-  text->flags = TXT_ISDIRTY | TXT_ISMEM;
+  txt->flags = TXT_ISDIRTY | TXT_ISMEM;
   if ((U.flag & USER_TXT_TABSTOSPACES_DISABLE) == 0) {
-    text->flags |= TXT_TABSTOSPACES;
+    txt->flags |= TXT_TABSTOSPACES;
   }
 
-  lib_list_clear(&text->lines);
+  lib_list_clear(&txt->lines);
 
-  tmp = (TextLine *)mem_mallocn(sizeof(TextLine), "textline");
-  tmp->line = (char *)mem_mallocn(1, "textline_string");
+  tmp = (TxtLine *)mem_mallocn(sizeof(TxtLine), "txtline");
+  tmp->line = (char *)mem_mallocn(1, "txtline_string");
   tmp->format = NULL;
 
   tmp->line[0] = 0;
@@ -69,12 +69,12 @@ static void text_init_data(Id *id)
   tmp->next = NULL;
   tmp->prev = NULL;
 
-  lib_addhead(&text->lines, tmp);
+  lib_addhead(&txt->lines, tmp);
 
-  text->curl = text->lines.first;
-  text->curc = 0;
-  text->sell = text->lines.first;
-  text->selc = 0;
+  txt->curl = txt->lines.first;
+  txt->curc = 0;
+  txt->sell = txt->lines.first;
+  txt->selc = 0;
 }
 
 /* Only copy internal data of Text Id from source
@@ -85,112 +85,112 @@ static void text_init_data(Id *id)
  * WARNING! This fn will not handle Id user count!
  *
  * param flag: Copying options (see dune_lib_id.h's LIB_ID_COPY_... flags for more). */
-static void text_copy_data(Main *UNUSED(dunemain),
-                           Id *id_dst,
-                           const Id *id_src,
-                           const int UNUSED(flag))
+static void txt_copy_data(Main *UNUSED(main),
+                          Id *id_dst,
+                          const Id *id_src,
+                          const int UNUSED(flag))
 {
-  Text *text_dst = (Text *)id_dst;
-  const Text *text_src = (Text *)id_src;
+  Txt *txt_dst = (Txt *)id_dst;
+  const Txt *txt_src = (Txt *)id_src;
 
   /* File name can be NULL. */
-  if (text_src->filepath) {
-    text_dst->filepath = lib_strdup(text_src->filepath);
+  if (txt_src->filepath) {
+    txt_dst->filepath = lib_strdup(txt_src->filepath);
   }
 
-  text_dst->flags |= TXT_ISDIRTY;
+  txt_dst->flags |= TXT_ISDIRTY;
 
-  lib_list_clear(&text_dst->lines);
-  text_dst->curl = text_dst->sell = NULL;
-  text_dst->compiled = NULL;
+  lib_list_clear(&txt_dst->lines);
+  txt_dst->curl = txt_dst->sell = NULL;
+  txt_dst->compiled = NULL;
 
   /* Walk down, reconstructing. */
-  LIST_FOREACH (TextLine *, line_src, &text_src->lines) {
-    TextLine *line_dst = mem_mallocn(sizeof(*line_dst), __func__);
+  LIST_FOREACH (TxtLine *, line_src, &text_src->lines) {
+    TxtLine *line_dst = mem_mallocn(sizeof(*line_dst), __func__);
 
     line_dst->line = lib_strdup(line_src->line);
     line_dst->format = NULL;
     line_dst->len = line_src->len;
 
-    lib_addtail(&text_dst->lines, line_dst);
+    lib_addtail(&txt_dst->lines, line_dst);
   }
 
-  text_dst->curl = text_dst->sell = text_dst->lines.first;
-  text_dst->curc = text_dst->selc = 0;
+  txt_dst->curl = txt_dst->sell = txt_dst->lines.first;
+  txt_dst->curc = txt_dst->selc = 0;
 }
 
-/* Free (or release) any data used by this text (does not free the text itself). */
-static void text_free_data(Id *id)
+/* Free (or release) any data used by this txt (does not free the txt itself). */
+static void txt_free_data(Id *id)
 {
   /* No animation-data here. */
-  Text *text = (Text *)id;
+  Txt *txt = (Txt *)id;
 
-  dune_text_free_lines(text);
+  txt_free_lines(txt);
 
-  MEM_SAFE_FREE(text->filepath);
+  MEM_SAFE_FREE(txt->filepath);
 }
 
-static void text_foreach_path(Id *id, PathForeachPathData *path_data)
+static void txt_foreach_path(Id *id, PathForeachPathData *path_data)
 {
-  Text *text = (Text *)id;
+  Txt *txt = (Txt *)id;
 
-  if (text->filepath != NULL) {
-    dune_path_foreach_path_allocated_process(path_data, &text->filepath);
+  if (txt->filepath != NULL) {
+    path_foreach_path_allocated_process(path_data, &txt->filepath);
   }
 }
 
-static void text_dune_write(DuneWriter *writer, Id *id, const void *id_address)
+static void txt_tray_write(Writer *writer, Id *id, const void *id_address)
 {
-  Text *text = (Text *)id;
+  Txt *txt = (Txt *)id;
 
   /* NOTE: we are clearing local temp data here, *not* the flag in the actual 'real' ID. */
-  if ((text->flags & TXT_ISMEM) && (text->flags & TXT_ISEXT)) {
-    text->flags &= ~TXT_ISEXT;
+  if ((txt->flags & TXT_ISMEM) && (txt->flags & TXT_ISEXT)) {
+    txt->flags &= ~TXT_ISEXT;
   }
 
   /* Clean up, important in undo case to reduce false detection of changed datablocks. */
-  text->compiled = NULL;
+  txt->compiled = NULL;
 
   /* write LibData */
-  loader_write_id_struct(writer, Text, id_address, &text->id);
-  dune_id_dune_write(writer, &text->id);
+  loader_write_id_struct(writer, Txt, id_address, &txt->id);
+  id_write(writer, &text->id);
 
-  if (text->filepath) {
-    loader_write_string(writer, text->filepath);
+  if (txt->filepath) {
+    loader_write_string(writer, txt->filepath);
   }
 
-  if (!(text->flags & TXT_ISEXT)) {
+  if (!(txt->flags & TXT_ISEXT)) {
     /* now write the text data, in two steps for optimization in the readfunction */
-    LIST_FOREACH (TextLine *, tmp, &text->lines) {
-      loader_write_struct(writer, TextLine, tmp);
+    LIST_FOREACH (TxtLine *, tmp, &txt->lines) {
+      loader_write_struct(writer, TxtLine, tmp);
     }
 
-    LIST_FOREACH (TextLine *, tmp, &text->lines) {
+    LIST_FOREACH (TxtLine *, tmp, &txt->lines) {
      loader_write_raw(writer, tmp->len + 1, tmp->line);
     }
   }
 }
 
-static void text_dune_read_data(DuneDataReader *reader, Id *id)
+static void txt_read_data(DataReader *reader, Id *id)
 {
-  Text *text = (Text *)id;
-  loader_read_data_address(reader, &text->filepath);
+  Txt *txt = (Txt *)id;
+  loader_read_data_address(reader, &txt->filepath);
 
-  text->compiled = NULL;
+  txt->compiled = NULL;
 
 #if 0
-  if (text->flags & TXT_ISEXT) {
-    kernel_text_reload(text);
+  if (txt->flags & TXT_ISEXT) {
+    txt_reload(txt);
   }
   /* else { */
 #endif
 
-  loader_read_list(reader, &text->lines);
+  loader_read_list(reader, &txt->lines);
 
-  loader_read_data_address(reader, &text->curl);
-  loader_read_data_address(reader, &text->sell);
+  loader_read_data_address(reader, &txt->curl);
+  loader_read_data_address(reader, &txt->sell);
 
-  LIST_FOREACH (TextLine *, ln, &text->lines) {
+  LIST_FOREACH (TxtLine *, ln, &txt->lines) {
     loader_read_data_address(reader, &ln->line);
     ln->format = NULL;
 
@@ -200,49 +200,49 @@ static void text_dune_read_data(DuneDataReader *reader, Id *id)
     }
   }
 
-  text->flags = (text->flags) & ~TXT_ISEXT;
+  txt->flags = (txt->flags) & ~TXT_ISEXT;
 }
 
 IdTypeInfo IdType_ID_TXT = {
     .id_code = ID_TXT,
     .id_filter = FILTER_ID_TXT,
-    .main_listbase_index = INDEX_ID_TXT,
+    .main_list_index = INDEX_ID_TXT,
     .struct_size = sizeof(Text),
     .name = "Text",
     .name_plural = "texts",
-    .translation_context = BLT_I18NCONTEXT_ID_TEXT,
+    .lang_cxt = LANG_CXT_ID_TEXT,
     .flags = IDTYPE_FLAGS_NO_ANIMDATA | IDTYPE_FLAGS_APPEND_IS_REUSABLE,
     .asset_type_info = NULL,
 
-    .init_data = text_init_data,
-    .copy_data = text_copy_data,
-    .free_data = text_free_data,
+    .init_data = txt_init_data,
+    .copy_data = txt_copy_data,
+    .free_data = txt_free_data,
     .make_local = NULL,
     .foreach_id = NULL,
     .foreach_cache = NULL,
-    .foreach_path = text_foreach_path,
+    .foreach_path = txt_foreach_path,
     .owner_get = NULL,
 
-    .dune_write = text_dune_write,
-    .dune_read_data = text_dune_read_data,
-    .dune_read_lib = NULL,
-    .dune_read_expand = NULL,
+    .tray_write = txt_write,
+    .tray_read_data = txt_read_data,
+    .tray_read_lib = NULL,
+    .tray_read_expand = NULL,
 
-    .dune_read_undo_preserve = NULL,
+    .tray_read_undo_preserve = NULL,
 
     .lib_override_apply_post = NULL,
 };
 
-/* Text Add, Free, Validation **/
-void dune_text_free_lines(Text *text)
+/* Txt Add, Free, Validation */
+void txt_free_lines(Txt *txt)
 {
-  for (TextLine *tmp = text->lines.first, *tmp_next; tmp; tmp = tmp_next) {
+  for (TxtLine *tmp = txt->lines.first, *tmp_next; tmp; tmp = tmp_next) {
     tmp_next = tmp->next;
-    mem_freeN(tmp->line);
+    mem_freen(tmp->line);
     if (tmp->format) {
-      mem_freeN(tmp->format);
+      mem_freen(tmp->format);
     }
-    mem_freeN(tmp);
+    mem_freen(tmp);
   }
 
   lib_list_clear(&text->lines);
@@ -250,11 +250,11 @@ void dune_text_free_lines(Text *text)
   text->curl = text->sell = NULL;
 }
 
-Text *dune_text_add(Main *dunemain, const char *name)
+Text *txt_add(Main *main, const char *name)
 {
-  Text *ta;
+  Txt *ta;
 
-  ta = dune_id_new(dunemain, ID_TXT, name);
+  ta = id_new(main, ID_TXT, name);
   /* Texts have no users by default... Set the fake user flag to ensure that this text block
    * doesn't get deleted by default when cleaning up data blocks. */
   id_us_min(&ta->id);
@@ -304,8 +304,8 @@ int txt_extended_ascii_as_utf8(char **str)
   return added;
 }
 
-/* Removes any control characters from a text-line and fixes invalid UTF8 sequences. */
-static void cleanup_textline(TextLine *tl)
+/* Removes any control characters from a txt-line and fixes invalid UTF8 sequences. */
+static void cleanup_txtline(TxtLine *tl)
 {
   int i;
 
@@ -319,9 +319,9 @@ static void cleanup_textline(TextLine *tl)
   tl->len += txt_extended_ascii_as_utf8(&tl->line);
 }
 
-/** used for load and reload (unlike txt_insert_buf)
+/* used for load and reload (unlike txt_insert_buf)
  * assumes all fields are empty */
-static void text_from_buf(Text *text, const unsigned char *buffer, const int len)
+static void txt_from_buf(Text *text, const unsigned char *buffer, const int len)
 {
   int i, llen, lines_count;
 
@@ -361,10 +361,10 @@ static void text_from_buf(Text *text, const unsigned char *buffer, const int len
    * - last character in buffer is \n. in this case new line is needed to
    *   deal with newline at end of file. (see T28087) */
   if (llen != 0 || lines_count == 0 || buffer[len - 1] == '\n') {
-    TextLine *tmp;
+    TxtLine *tmp;
 
-    tmp = (TextLine *)mem_mallocn(sizeof(TextLine), "textline");
-    tmp->line = (char *)mem_mallocn(llen + 1, "textline_string");
+    tmp = (TxtLine *)mem_mallocn(sizeof(TxtLine), "txtline");
+    tmp->line = (char *)mem_mallocn(llen + 1, "txtline_string");
     tmp->format = NULL;
 
     if (llen) {
@@ -376,56 +376,56 @@ static void text_from_buf(Text *text, const unsigned char *buffer, const int len
 
     cleanup_textline(tmp);
 
-    lib_addtail(&text->lines, tmp);
+    lib_addtail(&txt->lines, tmp);
     /* lines_count += 1; */ /* UNUSED */
   }
 
-  text->curl = text->sell = text->lines.first;
-  text->curc = text->selc = 0;
+  txt->curl = txt->sell = txt->lines.first;
+  txt->curc = txt->selc = 0;
 }
 
-bool dune_text_reload(Text *text)
+bool txt_reload(Txt *txt)
 {
   unsigned char *buffer;
   size_t buffer_len;
   char filepath_abs[FILE_MAX];
   lib_stat_t st;
 
-  if (!text->filepath) {
+  if (!txt->filepath) {
     return false;
   }
 
-  lib_strncpy(filepath_abs, text->filepath, FILE_MAX);
-  lib_path_abs(filepath_abs, ID_DUNE_PATH_FROM_GLOBAL(&text->id));
+  lib_strncpy(filepath_abs, txt->filepath, FILE_MAX);
+  lib_path_abs(filepath_abs, ID_PATH_FROM_GLOBAL(&text->id));
 
-  buffer = lib_file_read_text_as_mem(filepath_abs, 0, &buffer_len);
+  buffer = lib_file_read_txt_as_mem(filepath_abs, 0, &buffer_len);
   if (buffer == NULL) {
     return false;
   }
 
   /* free memory: */
-  dune_text_free_lines(text);
-  txt_make_dirty(text);
+  txt_free_lines(txt);
+  txt_make_dirty(txt);
 
   /* clear undo buffer */
   if (lib_stat(filepath_abs, &st) != -1) {
-    text->mtime = st.st_mtime;
+    txt->mtime = st.st_mtime;
   }
   else {
-    text->mtime = 0;
+    txt->mtime = 0;
   }
 
-  text_from_buf(text, buffer, buffer_len);
+  txt_from_buf(text, buffer, buffer_len);
 
   mem_freen(buffer);
   return true;
 }
 
-Text *dune_text_load_ex(Main *dunemain, const char *file, const char *relpath, const bool is_internal)
+Txt *txt_load_ex(Main *main, const char *file, const char *relpath, const bool is_internal)
 {
   unsigned char *buffer;
   size_t buffer_len;
-  Text *ta;
+  Txt *ta;
   char filepath_abs[FILE_MAX];
   lib_stat_t st;
 
@@ -434,12 +434,12 @@ Text *dune_text_load_ex(Main *dunemain, const char *file, const char *relpath, c
     lib_path_abs(filepath_abs, relpath);
   }
 
-  buffer = lib_file_read_text_as_mem(filepath_abs, 0, &buffer_len);
+  buffer = lib_file_read_txt_as_mem(filepath_abs, 0, &buffer_len);
   if (buffer == NULL) {
     return NULL;
   }
 
-  ta = dune_libblock_alloc(dunemain, ID_TXT, lib_path_basename(filepath_abs), 0);
+  ta = libblock_alloc(dunemain, ID_TXT, lib_path_basename(filepath_abs), 0);
   id_us_min(&ta->id);
   id_fake_user_set(&ta->id);
 
@@ -466,44 +466,44 @@ Text *dune_text_load_ex(Main *dunemain, const char *file, const char *relpath, c
     ta->mtime = 0;
   }
 
-  text_from_buf(ta, buffer, buffer_len);
+  txt_from_buf(ta, buffer, buffer_len);
 
   mem_freen(buffer);
 
   return ta;
 }
 
-Text *dune_text_load(Main *dunemain, const char *file, const char *relpath)
+Txt *txt_load(Main *main, const char *file, const char *relpath)
 {
-  return dune_text_load_ex(dunemain, file, relpath, false);
+  return txt_load_ex(main, file, relpath, false);
 }
 
-void dune_text_clear(Text *text) /* called directly from api */
+void txt_clear(Txt *txt) /* called directly from api */
 {
-  txt_sel_all(text);
-  txt_delete_sel(text);
-  txt_make_dirty(text);
+  txt_sel_all(txt);
+  txt_delete_sel(txt);
+  txt_make_dirty(txt);
 }
 
-void dune_text_write(Text *text, const char *str) /* called directly from api */
+void txt_write(Txt *txt, const char *str) /* called directly from api */
 {
-  txt_insert_buf(text, str);
-  txt_move_eof(text, 0);
-  txt_make_dirty(text);
+  txt_insert_buf(txt, str);
+  txt_move_eof(txt, 0);
+  txt_make_dirty(txt);
 }
 
-int dune_text_file_modified_check(Text *text)
+int txt_file_modified_check(Txt *txt)
 {
   lib_stat_t st;
   int result;
   char file[FILE_MAX];
 
-  if (!text->filepath) {
+  if (!txt->filepath) {
     return 0;
   }
 
-  lib_strncpy(file, text->filepath, FILE_MAX);
-  lib_path_abs(file, ID_DUNE_PATH_FROM_GLOBAL(&text->id));
+  lib_strncpy(file, txt->filepath, FILE_MAX);
+  lib_path_abs(file, ID_PATH_FROM_GLOBAL(&txt->id));
 
   if (!lib_exists(file)) {
     return 2;
@@ -519,14 +519,14 @@ int dune_text_file_modified_check(Text *text)
     return -1;
   }
 
-  if (st.st_mtime > text->mtime) {
+  if (st.st_mtime > txt->mtime) {
     return 1;
   }
 
   return 0;
 }
 
-void dune_text_file_modified_ignore(Text *text)
+void txt_file_modified_ignore(Txt *txt)
 {
   lib_stat_t st;
   int result;
