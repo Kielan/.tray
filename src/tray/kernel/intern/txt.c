@@ -26,12 +26,12 @@
 #include "types_text.h"
 #include "types_userdef.h"
 
-#include "dune_path.h"
-#include "dune_idtype.h"
-#include "dune_lib_id.h"
-#include "dune_main.h"
-#include "dune_node.h"
-#include "dune_text.h"
+#include "tray_path.h"
+#include "tray_idtype.h"
+#include "tray_lib_id.h"
+#include "tray_main.h"
+#include "tray_node.h"
+#include "tray_txt.h"
 
 #include "loader_read_write.h"
 
