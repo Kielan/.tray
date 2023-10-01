@@ -311,7 +311,7 @@ static NodeTreeType NodeTreeTypeUndefined;
 NodeType NodeTypeUndefined;
 NodeSocketType NodeSocketTypeUndefined;
 
-static CLG_LogRef LOG = {"dune.node"};
+static CLG_LogRef LOG = {"tray.node"};
 
 static void ntree_set_typeinfo(NodeTree *ntree, NodeTreeType *typeinfo);
 static void node_socket_copy(NodeSocket *sock_dst, const NodeSocket *sock_src, const int flag);
@@ -481,7 +481,7 @@ static void lib_foreach_node_socket(LibForeachIdData *data, NodeSocket *sock)
   LIB_FOREACHID_PROCESS_FUNCTION_CALL(
       data,
       IDP_foreach_prop(
-          sock->prop, IDP_TYPE_FILTER_ID, dune_lib_query_idpropsForeachIdLink_cb, data));
+          sock->prop, IDP_TYPE_FILTER_ID, lib_query_idpropsForeachIdLink_cb, data));
 
   switch ((eNodeSocketDatatype)sock->type) {
     case SOCK_OBJECT: {
@@ -562,7 +562,7 @@ static void node_foreach_cache(Id *id,
   NodeTree *nodetree = (NodeTree *)id;
   IdCacheKey key = {0};
   key.id_session_uuid = id->session_uuid;
-  key.offset_in_ID = offsetof(NodeTree, previews);
+  key.offset_in_id = offsetof(NodeTree, previews);
   key.cache_v = nodetree->previews;
 
   /* TODO: see also `direct_link_nodetree()` in readfile.c. */
@@ -613,15 +613,15 @@ static Id *node_owner_get(Main *main, Id *id)
   // lib_assert((id->tag & LIB_TAG_NO_MAIN) == 0);
 
   List *lists[] = {&main->materials,
-                       &main->lights,
-                       &main->worlds,
-                       &main->textures,
-                       &main->scenes,
-                       &main->linestyles,
-                       &main->simulations,
-                       nullptr};
+                   &main->lights,
+                   &main->worlds,
+                   &main->textures,
+                   &main->scenes,
+                   &main->linestyles,
+                   &main->simulations,
+                   nullptr};
 
-  NodeTree *ntree = (bNodeTree *)id;
+  NodeTree *ntree = (NodeTree *)id;
   for (int i = 0; lists[i] != nullptr; i++) {
     LIST_FOREACH (Id *, id_iter, lists[i]) {
       if (ntreeFromId(id_iter) == ntree) {
