@@ -24,13 +24,13 @@
 
 #include "lang.h"
 
-#include "dune_cxt.h"
-#include "dune_layer.h"
-#include "dune_main.h"
-#include "dune_scene.h"
-#include "dune_screen.h"
-#include "dune_sound.h"
-#include "dune_workspace.h"
+#include "tray_cxt.h"
+#include "tray_layer.h"
+#include "tray_main.h"
+#include "tray_scene.h"
+#include "tray_screen.h"
+#include "tray_sound.h"
+#include "tray_workspace.h"
 
 #include "render_engine.h"
 
@@ -39,27 +39,22 @@
 
 #include "CLG_log.h"
 
-#ifdef WITH_PYTHON
-#  include "BPY_extern.h"
-#endif
-
-static CLG_LogRef LOG = {"dune.cxt"};
+static CLG_LogRef LOG = {"tray.cxt"};
 
 /* struct */
 m
 struct  xt {
   int thread;
 
-  /* windowmanager context */
+  /* window context */
   struct {
-    struct wmWindowManager *manager;
-    struct wmWindow *window;
+    struct Win *win;
     struct WorkSpace *workspace;
-    struct bScreen *screen;
+    struct Screen *screen;
     struct ScrArea *area;
     struct ARegion *region;
     struct ARegion *menu;
-    struct wmGizmoGroup *gizmo_group;
+    struct WinGizmoGroup *gizmo_group;
     struct CxtStore *store;
 
     /* Op poll. */
@@ -76,12 +71,6 @@ struct  xt {
     struct Scene *scene;
 
     int recursion;
-    /** True if python is initialized. */
-    bool py_init;
-    void *py_context;
-    /* If we need to remove members, do so in a copy
-     * (keep this to check if the copy needs freeing). */
-    void *py_context_orig;
   } data;
 };
 
@@ -93,67 +82,66 @@ Cxt *cxt_create(void)
   return C;
 }
 
-bContext *CTX_copy(const bContext *C)
+Cxt *cxt_copy(const Cxt *C)
 {
-  bContext *newC = MEM_dupallocN((void *)C);
+  Cxt *newC = mem_dupallocn((void *)C);
 
-  memset(&newC->wm.operator_poll_msg_dyn_params, 0, sizeof(newC->wm.operator_poll_msg_dyn_params));
+  memset(&newC->win.op_poll_msg_dyn_params, 0, sizeof(newC->win.op_poll_msg_dyn_params));
 
   return newC;
 }
 
-void CTX_free(bContext *C)
+void cxt_free(Cxt *C)
 {
   /* This may contain a dynamically allocated message, free. */
-  CTX_wm_operator_poll_msg_clear(C);
+  cxt_win_op_poll_msg_clear(C);
 
-  MEM_freeN(C);
+  mem_freen(C);
 }
 
 /* store */
-
-bContextStore *CTX_store_add(ListBase *contexts, const char *name, const PointerRNA *ptr)
+CxtStore *cxt_store_add(List *cxts, const char *name, const ApiPtr *ptr)
 {
-  /* ensure we have a context to put the entry in, if it was already used
-   * we have to copy the context to ensure */
-  bContextStore *ctx = contexts->last;
+  /* ensure we have a cxt to put the entry in, if it was already used
+   * we have to copy the cxt to ensure */
+  CxtStore *cxt = cxts->last;
 
-  if (!ctx || ctx->used) {
+  if (!cxt || cxt->used) {
     if (ctx) {
       bContextStore *lastctx = ctx;
       ctx = MEM_dupallocN(lastctx);
       BLI_duplicatelist(&ctx->entries, &lastctx->entries);
     }
     else {
-      ctx = MEM_callocN(sizeof(bContextStore), "bContextStore");
+      cxt = mem_callocn(sizeof(CxtStore), "CxtStore");
     }
 
-    BLI_addtail(contexts, ctx);
+    lib_addtail(cxts, cxt);
   }
 
-  bContextStoreEntry *entry = MEM_callocN(sizeof(bContextStoreEntry), "bContextStoreEntry");
-  BLI_strncpy(entry->name, name, sizeof(entry->name));
+  CxtStoreEntry *entry = mem_callocn(sizeof(CxtStoreEntry), "CxtStoreEntry");
+  lib_strncpy(entry->name, name, sizeof(entry->name));
   entry->ptr = *ptr;
 
-  BLI_addtail(&ctx->entries, entry);
+  lib_addtail(&cxt->entries, entry);
 
-  return ctx;
+  return cxt;
 }
 
-bContextStore *CTX_store_add_all(ListBase *contexts, bContextStore *context)
+CxtStore *cxt_store_add_all(List *cxts, CxtStore *cxt)
 {
   /* ensure we have a context to put the entries in, if it was already used
    * we have to copy the context to ensure */
-  bContextStore *ctx = contexts->last;
+  CxtStore *cxt = cxts->last;
 
-  if (!ctx || ctx->used) {
-    if (ctx) {
-      bContextStore *lastctx = ctx;
-      ctx = MEM_dupallocN(lastctx);
-      BLI_duplicatelist(&ctx->entries, &lastctx->entries);
+  if (!cxt || cxt->used) {
+    if (cxt) {
+      CxtStore *lastcxt = cxt;
+      cxt = mem_dupallocn(lastctx);
+      lib_duplicatelist(&ctx->entries, &lastctx->entries);
     }
     else {
-      ctx = MEM_callocN(sizeof(bContextStore), "bContextStore");
+      ctx = mem_callocn(sizeof(CxtStore), "CxtStore");
     }
 
     BLI_addtail(contexts, ctx);
@@ -167,7 +155,7 @@ bContextStore *CTX_store_add_all(ListBase *contexts, bContextStore *context)
   return ctx;
 }
 
-bContextStore *CTX_store_get(bContext *C)
+CxtStore *cxt_store_get(Cxt *C)
 {
   return C->wm.store;
 }
@@ -185,17 +173,17 @@ bContextStore *CTX_store_copy(bContextStore *store)
   return ctx;
 }
 
-void CTX_store_free(bContextStore *store)
+void cxt_store_free(CxtStore *store)
 {
-  BLI_freelistN(&store->entries);
-  MEM_freeN(store);
+  lib_freelistn(&store->entries);
+  mem_freen(store);
 }
 
-void CTX_store_free_list(ListBase *contexts)
+void CTX_store_free_list(List *cxts)
 {
-  bContextStore *ctx;
-  while ((ctx = BLI_pophead(contexts))) {
-    CTX_store_free(ctx);
+  CxtStore *ctx;
+  while ((cxt = lib_pophead(cxts))) {
+    cxt_store_free(ctx);
   }
 }
 
