@@ -33,7 +33,7 @@ bool idtype_cache_key_cmp(const void *key_a_v, const void *key_b_v)
   const IdCacheKey *key_a = key_a_v;
   const IdCacheKey *key_b = key_b_v;
   return (key_a->id_session_uuid != key_b->id_session_uuid) ||
-         (key_a->offset_in_ID != key_b->offset_in_ID) || (key_a->cache_v != key_b->cache_v);
+         (key_a->offset_in_Id != key_b->offset_in_ID) || (key_a->cache_v != key_b->cache_v);
 }
 
 static IdTypeInfo *id_types[INDEX_ID_MAX] = {NULL};
@@ -89,7 +89,7 @@ static void id_type_init(void)
   INIT_TYPE(ID_SIM);
 
   /* Special naughty boy... */
-  lib_assert(IDType_ID_LINK_PLACEHOLDER.main_listbase_index == INDEX_ID_NULL);
+  lib_assert(IdType_ID_LINK_PLACEHOLDER.main_list_index == INDEX_ID_NULL);
   id_types[INDEX_ID_NULL] = &IdType_ID_LINK_PLACEHOLDER;
 
 #undef INIT_TYPE
@@ -297,7 +297,7 @@ int idtype_idcode_to_index(const short idcode)
   case ID_##_id: \
     return INDEX_ID_##_id
 
-  switch ((ID_Type)idcode) {
+  switch ((Id_Type)idcode) {
     CASE_IDINDEX(AC);
     CASE_IDINDEX(AR);
     CASE_IDINDEX(BR);
@@ -415,20 +415,20 @@ short idtype_idcode_iter_step(int *index)
 }
 
 void idtype_id_foreach_cache(struct Id *id,
-                                 IdTypeForeachCacheFnCb fn_cb,
-                                 void *user_data)
+                             IdTypeForeachCacheFnCb fn_cb,
+                             void *user_data)
 {
   const IdTypeInfo *type_info = idtype_get_info_from_id(id);
   if (type_info->foreach_cache != NULL) {
     type_info->foreach_cache(id, fn_cb, user_data);
   }
 
-  /* Handle 'private IDs'. */
+  /* Handle 'private Ids'. */
   NodeTree *nodetree = ntreeFromId(id);
   if (nodetree != NULL) {
     type_info = idtype_get_info_from_id(&nodetree->id);
     if (type_info == NULL) {
-      /* Very old .blend file seem to have empty names for their embedded node trees, see
+      /* Very old .tray file seem to have empty names for their embedded node trees, see
        * `blo_do_versions_250()`. Assume those are nodetrees then. */
       type_info = idtype_get_info_from_idcode(ID_NT);
     }
