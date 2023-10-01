@@ -4,32 +4,32 @@
 
 #include "mem_guardedalloc.h"
 
-#include "lib_dunelib.h"
+#include "lib_tray.h"
 #include "lib_ghash.h"
 #include "lib_mempool.h"
 #include "lib_threads.h"
 
 #include "STRUCT_ID.h"
 
-#include "dune_global.h"
-#include "dune_idtype.h"
-#include "dune_lib_id.h"
-#include "dune_lib_query.h"
-#include "dune_main.h"
-#include "dune_main_idmap.h"
+#include "tray_global.h"
+#include "tray_idtype.h"
+#include "tray_lib_id.h"
+#include "tray_lib_query.h"
+#include "tray_main.h"
+#include "tray_main_idmap.h"
 
 #include "imbuf.h"
 #include "imbuf_types.h"
 
-Main *dune_main_new(void)
+Main *main_new(void)
 {
   Main *main = mem_callocn(sizeof(Main), "new main");
   main->lock = mem_mallocn(sizeof(SpinLock), "main lock");
-  lib_spin_init((SpinLock *)bmain->lock);
+  lib_spin_init((SpinLock *)main->lock);
   return main;
 }
 
-void dune_main_free(Main *mainvar)
+void main_free(Main *mainvar)
 {
   /* also call when reading a file, erase all, etc */
   List *lbarray[INDEX_ID_MAX];
@@ -50,115 +50,115 @@ void dune_main_free(Main *mainvar)
     for (id = lb->first; id != NULL; id = id_next) {
       id_next = id->next;
 #if 1
-      dune_id_free_ex(mainvar, id, free_flag, false);
+      id_free_ex(mainvar, id, free_flag, false);
 #else
-      /* errors freeing ID's can be hard to track down,
+      /* errors freeing Id's can be hard to track down,
        * enable this so valgrind will give the line number in its error log */
       switch (a) {
         case 0:
-          dune_id_free_ex(mainvar, id, free_flag, false);
+          id_free_ex(mainvar, id, free_flag, false);
           break;
         case 1:
-          dune_id_free_ex(mainvar, id, free_flag, false);
+          id_free_ex(mainvar, id, free_flag, false);
           break;
         case 2:
-          dune_id_free_ex(mainvar, id, free_flag, false);
+          id_free_ex(mainvar, id, free_flag, false);
           break;
         case 3:
-          dune_id_free_ex(mainvar, id, free_flag, false);
+          id_free_ex(mainvar, id, free_flag, false);
           break;
         case 4:
-          dune_id_free_ex(mainvar, id, free_flag, false);
+          id_free_ex(mainvar, id, free_flag, false);
           break;
         case 5:
-          dune_id_free_ex(mainvar, id, free_flag, false);
+          id_free_ex(mainvar, id, free_flag, false);
           break;
         case 6:
-          dune_id_free_ex(mainvar, id, free_flag, false);
+          id_free_ex(mainvar, id, free_flag, false);
           break;
         case 7:
-          dune_id_free_ex(mainvar, id, free_flag, false);
+          id_free_ex(mainvar, id, free_flag, false);
           break;
         case 8:
-          dune_id_free_ex(mainvar, id, free_flag, false);
+          id_free_ex(mainvar, id, free_flag, false);
           break;
         case 9:
-          dune_id_free_ex(mainvar, id, free_flag, false);
+          id_free_ex(mainvar, id, free_flag, false);
           break;
         case 10:
-          dune_id_free_ex(mainvar, id, free_flag, false);
+          id_free_ex(mainvar, id, free_flag, false);
           break;
         case 11:
-          dune_id_free_ex(mainvar, id, free_flag, false);
+          id_free_ex(mainvar, id, free_flag, false);
           break;
         case 12:
-          dune_id_free_ex(mainvar, id, free_flag, false);
+          id_free_ex(mainvar, id, free_flag, false);
           break;
         case 13:
-          dune_id_free_ex(mainvar, id, free_flag, false);
+          id_free_ex(mainvar, id, free_flag, false);
           break;
         case 14:
-          dune_id_free_ex(mainvar, id, free_flag, false);
+          id_free_ex(mainvar, id, free_flag, false);
           break;
         case 15:
-          dune_id_free_ex(mainvar, id, free_flag, false);
+          id_free_ex(mainvar, id, free_flag, false);
           break;
         case 16:
-          dune_id_free_ex(mainvar, id, free_flag, false);
+          id_free_ex(mainvar, id, free_flag, false);
           break;
         case 17:
-          dune_id_free_ex(mainvar, id, free_flag, false);
+          id_free_ex(mainvar, id, free_flag, false);
           break;
         case 18:
-          dune_id_free_ex(mainvar, id, free_flag, false);
+          id_free_ex(mainvar, id, free_flag, false);
           break;
         case 19:
-          dune_id_free_ex(mainvar, id, free_flag, false);
+          id_free_ex(mainvar, id, free_flag, false);
           break;
         case 20:
-          dune_id_free_ex(mainvar, id, free_flag, false);
+          id_free_ex(mainvar, id, free_flag, false);
           break;
         case 21:
-          dune_id_free_ex(mainvar, id, free_flag, false);
+          id_free_ex(mainvar, id, free_flag, false);
           break;
         case 22:
-          dune_id_free_ex(mainvar, id, free_flag, false);
+          id_free_ex(mainvar, id, free_flag, false);
           break;
         case 23:
-          dune_id_free_ex(mainvar, id, free_flag, false);
+          id_free_ex(mainvar, id, free_flag, false);
           break;
         case 24:
-          dune_id_free_ex(mainvar, id, free_flag, false);
+          id_free_ex(mainvar, id, free_flag, false);
           break;
         case 25:
-          dune_id_free_ex(mainvar, id, free_flag, false);
+          id_free_ex(mainvar, id, free_flag, false);
           break;
         case 26:
-          dune_id_free_ex(mainvar, id, free_flag, false);
+          id_free_ex(mainvar, id, free_flag, false);
           break;
         case 27:
-          dune_id_free_ex(mainvar, id, free_flag, false);
+          id_free_ex(mainvar, id, free_flag, false);
           break;
         case 28:
-          dune_id_free_ex(mainvar, id, free_flag, false);
+          id_free_ex(mainvar, id, free_flag, false);
           break;
         case 29:
-          dune_id_free_ex(mainvar, id, free_flag, false);
+          id_free_ex(mainvar, id, free_flag, false);
           break;
         case 30:
-          dune_id_free_ex(mainvar, id, free_flag, false);
+          id_free_ex(mainvar, id, free_flag, false);
           break;
         case 31:
-          dune_id_free_ex(mainvar, id, free_flag, false);
+          id_free_ex(mainvar, id, free_flag, false);
           break;
         case 32:
-          dune_id_free_ex(mainvar, id, free_flag, false);
+          id_free_ex(mainvar, id, free_flag, false);
           break;
         case 33:
-          dune_id_free_ex(mainvar, id, free_flag, false);
+          id_free_ex(mainvar, id, free_flag, false);
           break;
         case 34:
-          dune_id_free_ex(mainvar, id, free_flag, false);
+          id_free_ex(mainvar, id, free_flag, false);
           break;
         default:
           lib_assert_unreachable();
@@ -170,11 +170,11 @@ void dune_main_free(Main *mainvar)
   }
 
   if (mainvar->relations) {
-    dune_main_relations_free(mainvar);
+    main_relations_free(mainvar);
   }
 
   if (mainvar->id_map) {
-    dune_main_idmap_destroy(mainvar->id_map);
+    main_idmap_destroy(mainvar->id_map);
   }
 
   lib_spin_end((SpinLock *)mainvar->lock);
@@ -192,12 +192,12 @@ bool dune_main_is_empty(struct Main *main)
   return true;
 }
 
-void dune_main_lock(struct Main *main)
+void main_lock(struct Main *main)
 {
   lib_spin_lock((SpinLock *)main->lock);
 }
 
-void dune_main_unlock(struct Main *main)
+void main_unlock(struct Main *main)
 {
   lib_spin_unlock((SpinLock *)main->lock);
 }
@@ -254,10 +254,10 @@ static int main_relations_create_idlink_cb(LibIdLinkCbData *cb_data)
   return IDWALK_RET_NOP;
 }
 
-void dune_main_relations_create(Main *main, const short flag)
+void main_relations_create(Main *main, const short flag)
 {
   if (main->relations != NULL) {
-    dune_main_relations_free(main);
+    main_relations_free(main);
   }
 
   main->relations = mem_mallocn(sizeof(*main->relations), __func__);
@@ -283,13 +283,13 @@ void dune_main_relations_create(Main *main, const short flag)
       lib_assert((*entry_p)->session_uuid == id->session_uuid);
     }
 
-    dune_lib_foreach_id_link(
+    lib_foreach_id_link(
         NULL, id, main_relations_create_idlink_cb, main->relations, idwalk_flag);
   }
   FOREACH_MAIN_ID_END;
 }
 
-void dune_main_relations_free(Main *main)
+void main_relations_free(Main *main)
 {
   if (main->relations != NULL) {
     if (main->relations->relations_from_ptrs != NULL) {
@@ -297,13 +297,13 @@ void dune_main_relations_free(Main *main)
     }
     lib_mempool_destroy(main->relations->entry_items_pool);
     mem_freen(main->relations);
-    bmain->relations = NULL;
+    main->relations = NULL;
   }
 }
 
-void dune_main_relations_tag_set(struct Main *main,
-                                 const eMainIdRelationsEntryTags tag,
-                                 const bool value)
+void main_relations_tag_set(struct Main *main,
+                            const eMainIdRelationsEntryTags tag,
+                            const bool value)
 {
   if (main->relations == NULL) {
     return;
@@ -324,7 +324,7 @@ void dune_main_relations_tag_set(struct Main *main,
   lib_ghashIter_free(gh_iter);
 }
 
-GSet *dune_main_gset_create(Main *main, GSet *gset)
+GSet *main_gset_create(Main *main, GSet *gset)
 {
   if (gset == NULL) {
     gset = lib_gset_new(lib_ghashutil_ptrhash, lib_ghashutil_ptrcmp, __func__);
@@ -338,7 +338,7 @@ GSet *dune_main_gset_create(Main *main, GSet *gset)
   return gset;
 }
 
-/* Utils for ID's library weak reference API. */
+/* Utils for Id's lib weak ref API */
 typedef struct LibWeakRefKey {
   char filepath[FILE_MAX];
   char id_name[MAX_ID_NAME];
@@ -372,7 +372,7 @@ static bool lib_weak_key_cmp(const void *a, const void *b)
            STREQ(string_pair_a->id_name, string_pair_b->id_name));
 }
 
-GHash *dune_main_lib_weak_refer_create(Main *main)
+GHash *main_lib_weak_refer_create(Main *main)
 {
   GHash *lib_weak_ref_mapping = lib_ghash_new(
       lib_weak_key_hash, lib_weak_key_cmp, __func__);
@@ -383,10 +383,10 @@ GHash *dune_main_lib_weak_refer_create(Main *main)
     if (id_iter == NULL) {
       continue;
     }
-    if (!dune_idtype_idcode_append_is_reusable(GS(id_iter->name))) {
+    if (!idtype_idcode_append_is_reusable(GS(id_iter->name))) {
       continue;
     }
-    lib_assert(dune_idtype_idcode_is_linkable(GS(id_iter->name)));
+    lib_assert(idtype_idcode_is_linkable(GS(id_iter->name)));
 
     FOREACH_MAIN_LIST_ID_BEGIN (lb, id_iter) {
       if (id_iter->lib_weak_ref == NULL) {
@@ -404,28 +404,28 @@ GHash *dune_main_lib_weak_refer_create(Main *main)
   return lib_weak_ref_mapping;
 }
 
-void dune_main_lib_weak_ref_destroy(GHash *lib_weak_ref_mapping)
+void main_lib_weak_ref_destroy(GHash *lib_weak_ref_mapping)
 {
   lib_ghash_free(lib_weak_ref_mapping, mem_freen, NULL);
 }
 
-Id *dune_main_lib_weak_ref_search_item(GHash *lib_weak_ref_mapping,
-                                       const char *lib_filepath,
-                                       const char *lib_id_name)
+Id *main_lib_weak_ref_search_item(GHash *lib_weak_ref_mapping,
+                                  const char *lib_filepath,
+                                  const char *lib_id_name)
 {
   LibWeakRefKey key;
   lib_weak_key_create(&key, lib_filepath, lib_id_name);
   return (Id *)lib_ghash_lookup(lib_weak_ref_mapping, &key);
 }
 
-void dune_main_lib_weak_ref_add_item(GHash *library_weak_ref_mapping,
-                                     const char *lib_filepath,
-                                     const char *lib_id_name,
-                                     Id *new_id)
+void main_lib_weak_ref_add_item(GHash *lib_weak_ref_mapping,
+                                const char *lib_filepath,
+                                const char *lib_id_name,
+                                Id *new_id)
 {
   lib_assert(GS(lib_id_name) == GS(new_id->name));
   lib_assert(new_id->lib_weak_ref == NULL);
-  lib_assert(dune_idtype_idcode_append_is_reusable(GS(new_id->name)));
+  lib_assert(idtype_idcode_append_is_reusable(GS(new_id->name)));
 
   new_id->lib_weak_ref = mem_mallocn(sizeof(*(new_id->lib_weak_ref)),
                                                __func__);
@@ -446,7 +446,7 @@ void dune_main_lib_weak_ref_add_item(GHash *library_weak_ref_mapping,
   *id_p = new_id;
 }
 
-void dune_main_lib_weak_ref_update_item(GHash *lib_weak_ref_mapping,
+void main_lib_weak_ref_update_item(GHash *lib_weak_ref_mapping,
                                         const char *lib_filepath,
                                         const char *lib_id_name,
                                         Id *old_id,
@@ -469,10 +469,10 @@ void dune_main_lib_weak_ref_update_item(GHash *lib_weak_ref_mapping,
   *id_p = new_id;
 }
 
-void dune_main_lib_weak_ref_remove_item(GHash *lib_weak_ref_mapping,
-                                        const char *lib_filepath,
-                                        const char *lib_id_name,
-                                        Id *old_id)
+void main_lib_weak_ref_remove_item(GHash *lib_weak_ref_mapping,
+                                   const char *lib_filepath,
+                                   const char *lib_id_name,
+                                   Id *old_id)
 {
   lib_assert(GS(lib_id_name) == GS(old_id->name));
   lib_assert(old_id->lib_weak_ref != NULL);
@@ -486,17 +486,17 @@ void dune_main_lib_weak_ref_remove_item(GHash *lib_weak_ref_mapping,
   MEM_SAFE_FREE(old_id->library_weak_ref);
 }
 
-DuneThumbnail *dune_main_thumbnail_from_imbuf(Main *main, ImBuf *img)
+Thumbnail *main_thumbnail_from_imbuf(Main *main, ImBuf *img)
 {
-  DuneThumbnail *data = NULL;
+  Thumbnail *data = NULL;
 
-  if (bmain) {
-    MEM_SAFE_FREE(bmain->blen_thumb);
+  if (main) {
+    MEM_SAFE_FREE(main->thumb);
   }
 
   if (img) {
-    const size_t sz = DUNE_THUMB_MEMSIZE(img->x, img->y);
-    data = MEM_mallocN(sz, __func__);
+    const size_t sz = THUMB_MEMSIZE(img->x, img->y);
+    data = mem_mallocn(sz, __func__);
 
     imbuf_rect_from_float(img); /* Just in case... */
     data->width = img->x;
@@ -504,80 +504,65 @@ DuneThumbnail *dune_main_thumbnail_from_imbuf(Main *main, ImBuf *img)
     memcpy(data->rect, img->rect, sz - sizeof(*data));
   }
 
-  if (bmain) {
-    main->blen_thumb = data;
+  if (main) {
+    main->thumb = data;
   }
   return data;
 }
 
-ImBuf *dune_main_thumbnail_to_imbuf(Main *bmain, DuneThumbnail *data)
+ImBuf *main_thumbnail_to_imbuf(Main *main, Thumbnail *data)
 {
   ImBuf *img = NULL;
 
   if (!data && main) {
-    data = main->dune_thumb;
+    data = main->thumb;
   }
 
   if (data) {
-    img = IMB_allocFromBuffer(
+    img = imbuf_allocFromBuffer(
         (const uint *)data->rect, NULL, (uint)data->width, (uint)data->height, 4);
   }
 
   return img;
 }
 
-void dune_main_thumbnail_create(struct Main *main)
+void main_thumbnail_create(struct Main *main)
 {
   MEM_SAFE_FREE(bmain->dune_thumb);
 
-  main->dune_thumb = mem_callocn(DUNE_THUMB_MEMSIZE(DUNE_THUMB_SIZE, DUNE_THUMB_SIZE), __func__);
-  main->dune_thumb->width = DUNE_THUMB_SIZE;
-  main->dune_thumb->height = DUNE_THUMB_SIZE;
+  main->thumb = mem_callocn(THUMB_MEMSIZE(THUMB_SIZE, THUMB_SIZE), __func__);
+  main->thumb->width = THUMB_SIZE;
+  main->thumb->height = THUMB_SIZE;
 }
 
-const char *dune_main_dunefile_path(const Main *bmain)
+const char *main_file_path(const Main *main)
 {
-  return bmain->filepath;
+  return main->filepath;
 }
 
-const char *dune_main_dunefile_path_from_global(void)
+const char *main_file_path_from_global(void)
 {
-  return dune_main_file_path(G_MAIN);
+  return main_file_path(G_MAIN);
 }
 
-List *which_libbase(Main *main, short type)
+List *which_lib(Main *main, short type)
 {
   switch ((ID_Type)type) {
     case ID_SCE:
       return &(main->scenes);
     case ID_LI:
-      return &(main->libraries);
+      return &(main->libs);
     case ID_OB:
       return &(main->objects);
-    case ID_ME:
-      return &(main->meshes);
-    case ID_CU_LEGACY:
-      return &(main->curves);
-    case ID_MB:
-      return &(main->metaballs);
-    case ID_MA:
-      return &(main->materials);
     case ID_TE:
       return &(main->textures);
     case ID_IM:
       return &(main->images);
-    case ID_LT:
-      return &(main->lattices);
-    case ID_LA:
-      return &(main->lights);
     case ID_CA:
       return &(main->cameras);
     case ID_IP:
       return &(main->ipo);
     case ID_KE:
-      return &(main->shapekeys);
-    case ID_WO:
-      return &(main->worlds);
     case ID_SCR:
       return &(main->screens);
     case ID_VF:
@@ -586,26 +571,18 @@ List *which_libbase(Main *main, short type)
       return &(main->texts);
     case ID_SPK:
       return &(main->speakers);
-    case ID_LP:
-      return &(main->lightprobes);
     case ID_SO:
       return &(main->sounds);
     case ID_GR:
       return &(main->collections);
-    case ID_AR:
-      return &(main->armatures);
     case ID_AC:
       return &(main->actions);
     case ID_NT:
       return &(main->nodetrees);
-    case ID_BR:
-      return &(main->brushes);
     case ID_PA:
       return &(main->particles);
     case ID_WM:
-      return &(main->wm);
-    case ID_GD:
-      return &(main->pens);
+      return &(main->win);
     case ID_MC:
       return &(main->movieclips);
     case ID_MSK:
@@ -614,33 +591,24 @@ List *which_libbase(Main *main, short type)
       return &(main->linestyles);
     case ID_PAL:
       return &(main->palettes);
-    case ID_PC:
-      return &(main->paintcurves);
     case ID_CF:
       return &(main->cachefiles);
     case ID_WS:
       return &(main->workspaces);
-    case ID_CV:
-      return &(main->hair_curves);
     case ID_PT:
       return &(main->pointclouds);
     case ID_VO:
       return &(main->volumes);
-    case ID_SIM:
-      return &(main->simulations);
   }
   return NULL;
 }
 
-int set_listbasepointers(Main *main, List *lb[/*INDEX_ID_MAX*/])
+int set_listptrs(Main *main, List *lb[/*INDEX_ID_MAX*/])
 {
-  /* Libraries may be accessed from pretty much any other ID. */
+  /* Libs may be accessed from pretty much any other Id */
   lb[INDEX_ID_LI] = &(main->lib);
 
   lb[INDEX_ID_IP] = &(main->ipo);
-
-  /* Moved here to avoid problems when freeing with animato (aligorith). */
-  lb[INDEX_ID_AC] = &(main->actions);
 
   lb[INDEX_ID_KE] = &(main->shapekeys);
 
@@ -659,29 +627,18 @@ int set_listbasepointers(Main *main, List *lb[/*INDEX_ID_MAX*/])
   /* Important!: When adding a new object type,
    * the specific data should be inserted here. */
 
-  lb[INDEX_ID_AR] = &(main->armatures);
-
   lb[INDEX_ID_CF] = &(main->cachefiles);
-  lb[INDEX_ID_ME] = &(main->meshes);
-  lb[INDEX_ID_CU_LEGACY] = &(main->curves);
-  lb[INDEX_ID_MB] = &(main->metaballs);
-  lb[INDEX_ID_CV] = &(main->hair_curves);
   lb[INDEX_ID_PT] = &(main->pointclouds);
   lb[INDEX_ID_VO] = &(main->volumes);
 
-  lb[INDEX_ID_LT] = &(main->lattices);
   lb[INDEX_ID_LA] = &(main->lights);
   lb[INDEX_ID_CA] = &(main->cameras);
 
   lb[INDEX_ID_TXT] = &(main->texts);
   lb[INDEX_ID_SO] = &(main->sounds);
   lb[INDEX_ID_GR] = &(main->collections);
-  lb[INDEX_ID_PAL] = &(main->palettes);
-  lb[INDEX_ID_PC] = &(main->paintcurves);
-  lb[INDEX_ID_BR] = &(main->brushes);
   lb[INDEX_ID_PA] = &(main->particles);
   lb[INDEX_ID_SPK] = &(main->speakers);
-  lb[INDEX_ID_LP] = &(main->lightprobes);
 
   lb[INDEX_ID_WO] = &(main->worlds);
   lb[INDEX_ID_MC] = &(main->movieclips);
@@ -690,8 +647,7 @@ int set_listbasepointers(Main *main, List *lb[/*INDEX_ID_MAX*/])
   lb[INDEX_ID_LS] = &(main->linestyles); /* referenced by scenes */
   lb[INDEX_ID_SCE] = &(main->scenes);
   lb[INDEX_ID_WS] = &(main->workspaces); /* before wm, so it's freed after it! */
-  lb[INDEX_ID_WM] = &(main->wm);
-  lb[INDEX_ID_MSK] = &(main->masks);
+  lb[INDEX_ID_WM] = &(main->win);
   lb[INDEX_ID_SIM] = &(main->simulations);
 
   lb[INDEX_ID_NULL] = NULL;
