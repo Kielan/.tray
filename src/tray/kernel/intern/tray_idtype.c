@@ -19,12 +19,12 @@
 
 #include "dune_idtype.h"
 
-// static CLG_LogRef LOG = {"bke.idtype"};
+// static CLG_LogRef LOG = {"dune.idtype"};
 uint idtype_cache_key_hash(const void *key_v)
 {
   const IdCacheKey *key = key_v;
   size_t hash = lib_ghashutil_uinthash(key->id_session_uuid);
-  hash = lib_ghashutil_combine_hash(hash, lib_ghashutil_uinthash((uint)key->offset_in_ID));
+  hash = lib_ghashutil_combine_hash(hash, lib_ghashutil_uinthash((uint)key->offset_in_id));
   return (uint)lib_ghashutil_combine_hash(hash, lib_ghashutil_ptrhash(key->cache_v));
 }
 
