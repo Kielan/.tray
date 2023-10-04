@@ -32,7 +32,7 @@ Main *main_new(void)
 void main_free(Main *mainvar)
 {
   /* also call when reading a file, erase all, etc */
-  List *lbarray[INDEX_ID_MAX];
+  List *listarray[INDEX_ID_MAX];
   int a;
 
   /* Since we are removing whole main, no need to bother 'properly'
@@ -44,10 +44,10 @@ void main_free(Main *mainvar)
 
   a = set_listpyrs(mainvar, lbarray);
   while (a--) {
-    List *lb = lbarray[a];
+    List *list = lbarray[a];
     Id *id, *id_next;
 
-    for (id = lb->first; id != NULL; id = id_next) {
+    for (id = list->first; id != NULL; id = id_next) {
       id_next = id->next;
 #if 1
       id_free_ex(mainvar, id, free_flag, false);
@@ -242,7 +242,7 @@ static int main_relations_create_idlink_cb(LibIdLinkCbData *cb_data)
         lib_assert((*entry_p)->session_uuid == (*id_ptr)->session_uuid);
       }
       MainIdRelationsEntryItem *from_id_entry = lib_mempool_alloc(
-          main_relations->entry_items_pool);
+      main_relations->entry_items_pool);
       from_id_entry->next = (*entry_p)->from_ids;
       from_id_entry->id_ptr.from = id_self;
       from_id_entry->session_uuid = id_self->session_uuid;
@@ -377,9 +377,9 @@ GHash *main_lib_weak_refer_create(Main *main)
   GHash *lib_weak_ref_mapping = lib_ghash_new(
       lib_weak_key_hash, lib_weak_key_cmp, __func__);
 
-  List *lb;
+  List *list;
   FOREACH_MAIN_LIST_BEGIN (main, lb) {
-    Id *id_iter = lb->first;
+    Id *id_iter = list->first;
     if (id_iter == NULL) {
       continue;
     }
@@ -388,7 +388,7 @@ GHash *main_lib_weak_refer_create(Main *main)
     }
     lib_assert(idtype_idcode_is_linkable(GS(id_iter->name)));
 
-    FOREACH_MAIN_LIST_ID_BEGIN (lb, id_iter) {
+    FOREACH_MAIN_LIST_ID_BEGIN (list, id_iter) {
       if (id_iter->lib_weak_ref == NULL) {
         continue;
       }
@@ -447,10 +447,10 @@ void main_lib_weak_ref_add_item(GHash *lib_weak_ref_mapping,
 }
 
 void main_lib_weak_ref_update_item(GHash *lib_weak_ref_mapping,
-                                        const char *lib_filepath,
-                                        const char *lib_id_name,
-                                        Id *old_id,
-                                        Id *new_id)
+                                   const char *lib_filepath,
+                                   const char *lib_id_name,
+                                   Id *old_id,
+                                   Id *new_id)
 {
   lib_assert(GS(lib_id_name) == GS(old_id->name));
   lib_assert(GS(lib_id_name) == GS(new_id->name));
