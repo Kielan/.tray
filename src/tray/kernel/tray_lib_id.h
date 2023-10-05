@@ -3,7 +3,7 @@
 /* API to manage data-blocks inside of Blender's Main data-base, or as independent runtime-only
  * data.
  *
- * note `dune_lib_` files are for operations over data-blocks themselves, although they might
+ * note `lib_` files are for operations over data-blocks themselves, although they might
  * alter Main as well (when creating/renaming/deleting an Id e.g.).
  *
  * section Fn Names
@@ -11,16 +11,16 @@
  * warning Descriptions below is ideal goal, current status of naming does not yet fully follow it
  * (this is WIP).
  *
- * - `dune_lib_id_` should be used for rather high-level ops, that involve Main database and
+ * - `id_` should be used for rather high-level ops, that involve Main database and
  *   relations with other Ids, and can be considered as 'safe' (as in, in themselves, they leave
  *   affected Ids/Main in a consistent status).
- * - `dune_lib_libblock_` should be used for lower level operations, that perform some parts of
- *   `dune_lib_id_` ones, but will generally not ensure caller that affected data is in a consisted
+ * - `libblock_` should be used for lower level ops, that perform some parts of
+ *   `id_` ones, but will generally not ensure caller that affected data is in a consisted
  *   state by their own ex alone.
- * - `dune_lib_main_` should be used for operations performed over all Ids of a given Main
+ * - `lib_main_` should be used for ops performed over all Ids of a given Main
  *   data-base.
  *
- * note External code should typically not use `dune_lib_libblock_` fns, except in some
+ * note External code should typically not use `libblock_` fns, except in some
  * specific cases requiring advanced (and potentially dangerous) handling. */
 
 #include "lib_compiler_attrs.h"
@@ -65,14 +65,14 @@ void libblock_runtime_reset_remapping_status(struct Id *id) ATTR_NONNULL(1);
 /* Generate a session-wise uuid for the given id.
  * note "session-wise" here means while editing a given .dune file. Once a new .dune file is
  * loaded or created, undo history is cleared/reset, and so is the uuid counter. */
-void lib_libblock_session_uuid_ensure(struct Id *id);
+void libblock_session_uuid_ensure(struct Id *id);
 /* Re-generate a new session-wise uuid for the given id.
  *
  * warning This has a few very specific use-cases, no other usage is expected currently:
  *   - To handle UI-related data-blocks that are kept across new file reading, when we do keep
  * existing UI.
  *   - For Ids that are made local without needing any copying. */
-void lib_libblock_session_uuid_renew(struct Id *id);
+void libblock_session_uuid_renew(struct Id *id);
 
 /* Generic helper to create a new empty data-block of given type in given main database.
  * param name: can be NULL, in which case we get default name for this Id type. */
@@ -87,54 +87,54 @@ enum {
   /* Generic options (should be handled by all Id types copying, ID creation, etc.). *** */
   /* Create datablock outside of any main database -
    * similar to 'localize' functions of materials etc. */
-  LIB_ID_CREATE_NO_MAIN = 1 << 0,
+  ID_CREATE_NO_MAIN = 1 << 0,
   /* Do not affect user refcount of datablocks used by new one
    * (which also gets zero usercount then).
-   * Implies LIB_ID_CREATE_NO_MAIN. */
-  LIB_ID_CREATE_NO_USER_REFCOUNT = 1 << 1,
+   * Implies ID_CREATE_NO_MAIN. */
+  ID_CREATE_NO_USER_REFCOUNT = 1 << 1,
   /* Assume given 'newid' already points to allocated memory for whole datablock
    * (Id + data) - USE WITH CAUTION!
-   * Implies LIB_ID_CREATE_NO_MAIN. */
-  LIB_ID_CREATE_NO_ALLOCATE = 1 << 2,
+   * Implies ID_CREATE_NO_MAIN. */
+  ID_CREATE_NO_ALLOCATE = 1 << 2,
 
   /* Do not tag new Id for update in graph. */
-  LIB_ID_CREATE_NO_GRAPH_TAG = 1 << 8,
+  ID_CREATE_NO_GRAPH_TAG = 1 << 8,
 
   /* Very similar to LIB_ID_CREATE_NO_MAIN, and should never be used with it (typically combined
-   * with LIB_ID_CREATE_LOCALIZE or LIB_ID_COPY_LOCALIZE in fact).
+   * with ID_CREATE_LOCALIZE or LIB_ID_COPY_LOCALIZE in fact).
    * It ensures that IDs created with it will get the LIB_TAG_LOCALIZED tag, and uses some
    * specific code in some copy cases (mostly for node trees). */
-  LIB_ID_CREATE_LOCAL = 1 << 9,
+  ID_CREATE_LOCAL = 1 << 9,
 
   /* Create for the graph, when set LIB_TAG_COPIED_ON_WRITE must be set.
    * Internally this is used to share some ptrs instead of duplicating them. */
-  LIB_ID_COPY_SET_COPIED_ON_WRITE = 1 << 10,
+  ID_COPY_SET_COPIED_ON_WRITE = 1 << 10,
 
   /* Specific options to some Id types or usages */
   /* Copy runtime data caches. */
-  LIB_ID_COPY_CACHES = 1 << 18,
+  ID_COPY_CACHES = 1 << 18,
   /* Mesh: Ref CD data layers instead of doing real copy - USE WITH CAUTION! */
-  LIB_ID_COPY_CD_REF = 1 << 20,
+  ID_COPY_CD_REF = 1 << 20,
   /* Do not copy id->override_library, used by Id data-block override routines. */
-  LIB_ID_COPY_NO_LIB_OVERRIDE = 1 << 21,
+  ID_COPY_NO_LIB_OVERRIDE = 1 << 21,
   /* When copying local sub-data (like constraints or modifiers), do not set their "library
    * override local data" flag. */
-  LIB_ID_COPY_NO_LIB_OVERRIDE_LOCAL_DATA_FLAG = 1 << 22,
+  ID_COPY_NO_LIB_OVERRIDE_LOCAL_DATA_FLAG = 1 << 22,
 
   /* Keep the lib ptr when copying data-block outside of bmain. */
-  LIB_ID_COPY_KEEP_LIB = 1 << 25,
+  ID_COPY_KEEP_LIB = 1 << 25,
   /* EXCEPTION! Specific deep-copy of node trees used e.g. for rendering purposes. */
-  LIB_ID_COPY_NODETREE_LOCALIZE = 1 << 27,
+  ID_COPY_NODETREE_LOCALIZE = 1 << 27,
   /* EXCEPTION! Specific handling of RB objects regarding collections differs depending whether we
    * duplicate scene/collections, or objects. */
-  LIB_ID_COPY_RIGID_BODY_NO_COLLECTION_HANDLING = 1 << 28,
+  ID_COPY_RIGID_BODY_NO_COLLECTION_HANDLING = 1 << 28,
 
   /* Create a local, outside of main, data-block to work on. */
-  LIB_ID_CREATE_LOCALIZE = LIB_ID_CREATE_NO_MAIN | LIB_ID_CREATE_NO_USER_REFCOUNT |
-                           LIB_ID_CREATE_NO_GRAPH_TAG,
+  ID_CREATE_LOCALIZE = ID_CREATE_NO_MAIN | ID_CREATE_NO_USER_REFCOUNT |
+                           ID_CREATE_NO_GRAPH_TAG,
   /* Generate a local copy, outside of main, to work on (used by COW e.g.). */
-  LIB_ID_COPY_LOCALIZE = LIB_ID_CREATE_LOCALIZE | LIB_ID_COPY_NO_PREVIEW | LIB_ID_COPY_CACHES |
-                         LIB_ID_COPY_NO_LIB_OVERRIDE,
+  ID_COPY_LOCALIZE = ID_CREATE_LOCALIZE | ID_COPY_NO_PREVIEW | ID_COPY_CACHES |
+                         ID_COPY_NO_LIB_OVERRIDE,
 };
 
 void libblock_copy_ex(struct Main *main,
@@ -149,45 +149,45 @@ void *libblock_copy(struct Main *main, const struct Id *id) ATTR_WARN_UNUSED_RES
 void libblock_rename(struct Main *main, struct Id *id, const char *name) ATTR_NONNULL();
 /* Use after setting the Id's name
  * When name exists: call 'new_id' */
-void lib_libblock_ensure_unique_name(struct Main *main, const char *name) ATTR_NONNULL();
+void libblock_ensure_unique_name(struct Main *main, const char *name) ATTR_NONNULL();
 
 struct Id *libblock_find_name(struct Main *main,
-                                   short type,
-                                   const char *name) ATTR_WARN_UNUSED_RESULT ATTR_NONNULL();
+                              short type,
+                              const char *name) ATTR_WARN_UNUSED_RESULT ATTR_NONNULL();
 struct Id *libblock_find_session_uuid(struct Main *main, short type, uint32_t session_uuid);
 /* Duplicate (a.k.a. deep copy) common processing options.
  * See also eDupFlags for options controlling what kind of Ids to duplicate. */
-typedef enum eLibIdFlagsDup {
+typedef enum eIdFlagsDup {
   /* This call to a duplicate function is part of another call for some parent Id.
    * Therefore, this sub-process should not clear `newid` ptrs, nor handle remapping itself.
    * NOTE: In some cases (like Object one), the duplicate fn may be called on the root Id
    * with this flag set, as remapping and/or other similar tasks need to be handled by the caller. */
-  LIB_ID_DUP_IS_SUBPROCESS = 1 << 0,
-  /** This call is performed on a 'root' Id, and should therefore perform some decisions regarding
+  ID_DUP_IS_SUBPROCESS = 1 << 0,
+  /* This call is performed on a 'root' Id, and should therefore perform some decisions regarding
    * sub-IDs (dependencies), check for linked vs. locale data, etc. */
-  LIB_ID_DUP_IS_ROOT_ID = 1 << 1,
-} eLibIdIdFlagsDup;
+  ID_DUP_IS_ROOT_ID = 1 << 1,
+} eIdFlagsDup;
 
-ENUM_OPS(eLibIdFlagsDup, LIB_ID_DUP_IS_ROOT_ID)
+ENUM_OPS(eIdFlagsDup, ID_DUP_IS_ROOT_ID)
 
 /* lib_remap.c (keep here since they're general functions) */
 /* New freeing logic options. */
 enum {
   /* Generic options (should be handled by all ID types freeing). *** */
   /* Do not try to remove freed ID from given Main (passed Main may be NULL). */
-  LIB_ID_FREE_NO_MAIN = 1 << 0,
+  ID_FREE_NO_MAIN = 1 << 0,
   /* Do not affect user refcount of datablocks used by freed one.
    * Implies LIB_ID_FREE_NO_MAIN. */
-  LIB_ID_FREE_NO_USER_REFCOUNT = 1 << 1,
+  ID_FREE_NO_USER_REFCOUNT = 1 << 1,
   /* Assume freed Id datablock memory is managed elsewhere, do not free it
    * (still calls relevant ID type's freeing function though) - USE WITH CAUTION!
    * Implies LIB_ID_FREE_NO_MAIN */
-  LIB_ID_FREE_NOT_ALLOCATED = 1 << 2,
+  ID_FREE_NOT_ALLOCATED = 1 << 2,
 
   /* Do not tag freed ID for update in graph. */
-  LIB_ID_FREE_NO_DEG_TAG = 1 << 8,
+  ID_FREE_NO_DEG_TAG = 1 << 8,
   /* Do not attempt to remove freed ID from UI data/notifiers/... */
-  LIB_ID_FREE_NO_UI_USER = 1 << 9,
+  ID_FREE_NO_UI_USER = 1 << 9,
 };
 
 void libblock_free_datablock(struct Id *id, int flag) ATTR_NONNULL();
@@ -197,7 +197,7 @@ void libblock_free_data(struct Id *id, bool do_id_user) ATTR_NONNULL();
  * this fn will need to be called too, if Python has access to the data.
  *
  * Id data-blocks such as Material.nodetree are not stored in Main. */
-void libblock_free_data_py(struct ID *id);
+void libblock_free_data_py(struct Id *id);
 
 /* Complete Id freeing, extended version for corner cases.
  * Can override default (and safe!) freeing process, to gain some speed up.
@@ -271,28 +271,28 @@ void id_newptr_and_tag_clear(struct Id *id);
 /* Flags to control make local code behavior. */
 enum {
   /* Making that Id local is part of making local a whole library. */
-  LIB_ID_MAKELOCAL_FULL_LIB = 1 << 0,
+  ID_MAKELOCAL_FULL_LIB = 1 << 0,
 
   /* In case caller code already knows this ID should be made local without copying. */
-  LIB_ID_MAKELOCAL_FORCE_LOCAL = 1 << 1,
+  ID_MAKELOCAL_FORCE_LOCAL = 1 << 1,
   /* In case caller code already knows this ID should be made local using copying. */
-  LIB_ID_MAKELOCAL_FORCE_COPY = 1 << 2,
+  ID_MAKELOCAL_FORCE_COPY = 1 << 2,
 
   /* Clear asset data (in case the ID can actually be made local, in copy case asset data is never
    * copied over). */
-  LIB_ID_MAKELOCAL_ASSET_DATA_CLEAR = 1 << 3,
+  ID_MAKELOCAL_ASSET_DATA_CLEAR = 1 << 3,
 };
 
 /* Helper to decide whether given `id` can be directly made local, or needs to be copied.
  * `r_force_local` and `r_force_copy` cannot be true together. But both can be false, in case no
  * action should be performed.
  *
- * note low-level helper to de-duplicate logic between `lib_id_make_local_generic` and the
+ * note low-level helper to de-duplicate logic between `id_make_local_generic` and the
  * specific corner-cases implementations needed for objects and brushes. */
-void lib_id_make_local_generic_action_define(
+void id_make_local_generic_action_define(
     struct Main *main, struct Id *id, int flags, bool *r_force_local, bool *r_force_copy);
 /* Generic 'make local' function, works for most of data-block types. */
-void lib_id_make_local_generic(struct Main *main, struct Id *id, int flags);
+void id_make_local_generic(struct Main *main, struct Id *id, int flags);
 /* Calls the appropriate make_local method for the block, unless test is set.
  *
  * note Always set id.newid ptr in case it gets duplicated.
@@ -300,7 +300,7 @@ void lib_id_make_local_generic(struct Main *main, struct Id *id, int flags);
  * param flags: Special flag used when making a whole library's content local,
  * it needs specific handling.
  * return true is the Id has successfully been made local. */
-bool lib_id_make_local(struct Main *main, struct Id *id, int flags);
+bool id_make_local(struct Main *main, struct Id *id, int flags);
 /* note Does *not* set id.newid ptr. */
 bool id_single_user(struct Cxt *C,
                     struct Id *id,
@@ -317,9 +317,9 @@ struct Id *id_copy(struct Main *main, const struct Id *id);
  *
  * There are exceptions though:
  * - Embedded Ids (root node trees and master collections) are always copied with their owner.
- * - If LIB_ID_COPY_ACTIONS is defined, actions used by anim-data will be duplicated.
- * - If LIB_ID_COPY_SHAPEKEY is defined, shape-keys will be duplicated.
- * - If LIB_ID_CREATE_LOCAL is defined, root node trees will be deep-duplicated recursively.
+ * - If ID_COPY_ACTIONS is defined, actions used by anim-data will be duplicated.
+ * - If ID_COPY_SHAPEKEY is defined, shape-keys will be duplicated.
+ * - If ID_CREATE_LOCAL is defined, root node trees will be deep-duplicated recursively.
  *
  * note User-count of new copy is always set to 1.
  *
@@ -343,13 +343,13 @@ struct Id *id_copy_for_duplicate(struct Main *main,
  *
  * param main: May be NULL, in which case there will be no remapping of internal ptrs to
  * itself. */
-void lib_id_swap(struct Main *main, struct Id *id_a, struct Id *id_b);
+void id_swap(struct Main *main, struct Id *id_a, struct Id *id_b);
 /* Does a mere memory swap over the whole Ids data (including type-specific memory).
  * note All internal Id data itself is also swapped.
  *
  * param main: May be NULL, in which case there will be no remapping of internal ptrs to
  * itself. */
-void lib_id_swap_full(struct Main *main, struct Id *id_a, struct Id *id_b);
+void id_swap_full(struct Main *main, struct Id *id_a, struct Id *id_b);
 
 /* Sort given id into given list list, using case-insensitive comparison of the id names.
  *
@@ -360,7 +360,7 @@ void lib_id_swap_full(struct Main *main, struct Id *id_a, struct Id *id_b);
 void id_sort_by_name(struct List *list, struct Id *id, struct Id *id_sorting_hint);
 /* Expand Id usages of given id as 'extern' (and no more indirect) linked data.
  * Used by Id copy/make_local fns. */
-void duen_lib_id_expand_local(struct Main *main, struct Id *id, int flags);
+void id_expand_local(struct Main *main, struct Id *id, int flags);
 
 /* Ensures given Id has a unique name in given list.
  *
@@ -383,39 +383,39 @@ void id_clear_lib_data(struct Main *main, struct Id *id, int flags);
 /* Clear or set given tags for all ids of given type in `main` (runtime tags).
  *
  * note Affect whole Main database. */
-void main_id_tag_idcode(struct Main *mainvar, short type, int tag, bool value);
+void id_tag_idcode(struct Main *mainvar, short type, int tag, bool value);
 /* Clear or set given tags for all ids in list (runtime tags). */
-void main_id_tag_list(struct List *list, int tag, bool value);
+void id_tag_list(struct List *list, int tag, bool value);
 /* Clear or set given tags for all ids in main (runtime tags). */
-void main_id_tag_all(struct Main *mainvar, int tag, bool value);
+void id_tag_all(struct Main *mainvar, int tag, bool value);
 
-/* Clear or set given flags for all ids in listbase (persistent flags). */
-void dube_main_id_flag_list(struct List *list, int flag, bool value);
+/* Clear or set given flags for all ids in list (persistent flags). */
+void id_flag_list(struct List *list, int flag, bool value);
 /* Clear or set given flags for all ids in main (persistent flags). */
-void main_id_flag_all(struct Main *main, int flag, bool value);
+void id_flag_all(struct Main *main, int flag, bool value);
 
 /* Next to indirect usage in `readfile.c/writefile.c` also in `editobject.c`, `scene.c`. */
-void main_id_newptr_and_tag_clear(struct Main *main);
+void id_newptr_and_tag_clear(struct Main *main);
 
-void main_id_refcount_recompute(struct Main *main, bool do_linked_only);
+void id_refcount_recompute(struct Main *main, bool do_linked_only);
 
-void main_lib_objects_recalc_all(struct Main *main);
+void lib_objects_recalc_all(struct Main *main);
 
 /* Only for repairing files via versioning, avoid for general use. */
-void main_id_repair_duplicate_names_list(struct List *list);
+void id_repair_duplicate_names_list(struct List *list);
 
 #define MAX_ID_FULL_NAME (64 + 64 + 3 + 1)         /* 64 is MAX_ID_NAME - 2 */
 #define MAX_ID_FULL_NAME_UI (MAX_ID_FULL_NAME + 3) /* Adds 'keycode' two letters at beginning. */
-/* Generate full name of the data-block (without ID code, but with library if any).
+/* Generate full name of the data-block (without Id code, but with lib if any).
  *
  * note Result is unique to a given ID type in a given Main database.
  *
- * param name: An allocated string of minimal length #MAX_ID_FULL_NAME,
+ * param name: An allocated string of minimal length MAX_ID_FULL_NAME,
  * will be filled with generated string.
- * param sep_char: Character to use for separating name and library name.
+ * param sep_char: Char to use for separating name and lib name.
  * Can be 0 to use default (' '). */
 void id_full_name_get(char name[MAX_ID_FULL_NAME], const struct Id *id, char separator_char);
-/* Generate full name of the data-block (without ID code, but with lib if any),
+/* Generate full name of the data-block (without Id code, but with lib if any),
  * with a 2 to 3 character prefix prepended indicating whether it comes from a lib,
  * is overriding, has a fake or no user, etc.
  *
@@ -423,10 +423,9 @@ void id_full_name_get(char name[MAX_ID_FULL_NAME], const struct Id *id, char sep
  *
  * param name: An allocated string of minimal length MAX_ID_FULL_NAME_UI,
  * will be filled with generated string.
- * param sep_char: Character to use for separating name and library name.
+ * param sep_char: Character to use for separating name and lib name.
  * Can be 0 to use default (' ').
- * param r_prefix_len: The length of the prefix added.
- */
+ * param r_prefix_len: The length of the prefix added. */
 void id_full_name_ui_prefix_get(char name[MAX_ID_FULL_NAME_UI],
                                 const struct Id *id,
                                 bool add_lib_hint,
@@ -435,4 +434,4 @@ void id_full_name_ui_prefix_get(char name[MAX_ID_FULL_NAME_UI],
 
 /* Generate a concatenation of Id name (including two-chars type code) and its lib name, if any.
  *
- * return A unique allocated string key for any ID in the whole Main database.*/
+ * return A unique allocated string key for any Id in the whole Main database.*/
