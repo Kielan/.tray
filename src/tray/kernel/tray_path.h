@@ -19,7 +19,7 @@ typedef enum ePathForeachFlag {
   /* Flags controlling the behavior of the generic Path API. */
 
   /* Ensures the `absolute_base_path` member of PathForeachPathData is initialized properly with
-   * the path of the current .dune file. This can be used by the callbacks to convert relative
+   * the path of the current .dune file. This can be used by the cbs to convert relative
    * paths to absolute ones. */
   PATH_FOREACH_PATH_ABSOLUTE = (1 << 0),
   /* Skip paths of linked IDs. */
@@ -28,14 +28,14 @@ typedef enum ePathForeachFlag {
   PATH_FOREACH_PATH_SKIP_PACKED = (1 << 2),
   /* Resolve tokens within a virtual filepath to a single, concrete, filepath. */
   PATH_FOREACH_PATH_RESOLVE_TOKEN = (1 << 3),
-  /* Skip weak reference paths. Those paths are typically 'nice to have' extra information, but are
-   * not used as actual source of data by the current .blend file.
+  /* Skip weak ref paths. Those paths are typically 'nice to have' extra information, but are
+   * not used as actual source of data by the current .tray file.
    *
-   * NOTE: Currently this only concerns the weak ref to a library file stored in
-   * `ID::lib_weak_ref. */
+   * NOTE: Currently this only concerns the weak ref to a lib file stored in
+   * `Id::lib_weak_ref. */
   PATH_TRAVERSE_SKIP_WEAK_REFERENCES = (1 << 5),
 
-  /* Flags not affecting the generic DunePath API. Those may be used by specific IDTypeInfo
+  /* Flags not affecting the generic DunePath API. Those may be used by specific IdTypeInfo
    * `foreach_path` implementations and/or cbs to implement specific behaviors. */
 
   /* Skip paths where a single dir is used with an array of files, eg. sequence strip images or
@@ -85,7 +85,7 @@ typedef struct PathForeachPathData {
 } PathForeachPathData;
 
 /* Run `path_data.cb_fn` on all paths contained in `id`. */
-void path_foreach_path_id(PathForeachPathData *dunepath_data, struct Id *id);
+void path_foreach_path_id(PathForeachPathData *path_data, struct Id *id);
 
 /* Run `path_data.cb_fn` on all paths of all Ids in `main`. */
 void path_foreach_path_main(PathForeachPathData *path_data);
@@ -137,13 +137,13 @@ void path_missing_files_check(struct Main *main, struct ReportList *reports);
  *
  * param searchpath: The root directory in which the new filepaths should be searched for.
  * param find_all: If `true`, also search for files which current path is still valid, if `false`
- *                  skip those still valid paths. */
+ * skip those still valid paths. */
 void path_missing_files_find(struct Main *main,
                              const char *searchpath,
                              struct ReportList *reports,
                              bool find_all);
 
-/* Rebase all relative file paths in given dunemain from basedir_src to basedir_dst. */
+/* Rebase all relative file paths in given main from basedir_src to basedir_dst. */
 void path_relative_rebase(struct Main *main,
                           const char *basedir_src,
                           const char *basedir_dst,
@@ -159,9 +159,9 @@ void path_absolute_convert(struct Main *main,
                            const char *basedir,
                            struct ReportList *reports);
 
-/* Temp backup of paths from all Ids in given dunemain.
+/* Temp backup of paths from all Ids in given main.
  *
- * return An opaque handle to pass to dune_dunepath_list_restore and path_list_free. */
+ * return An opaque handle to pass to path_list_restore and path_list_free. */
 void *path_list_backup(struct Main *main, ePathForeachFlag flag);
 
 /* Restore the temp backup of paths from path_list_handle into all Ids in given main.
