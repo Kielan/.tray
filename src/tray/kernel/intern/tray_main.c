@@ -40,7 +40,7 @@ void main_free(Main *mainvar)
   const int free_flag = (LIB_ID_FREE_NO_MAIN | LIB_ID_FREE_NO_UI_USER |
                          LIB_ID_FREE_NO_USER_REFCOUNT | LIB_ID_FREE_NO_DEG_TAG);
 
-  MEM_SAFE_FREE(mainvar->dune_thumb);
+  MEM_SAFE_FREE(mainvar->tray_thumb);
 
   a = set_listpyrs(mainvar, lbarray);
   while (a--) {
@@ -182,7 +182,7 @@ void main_free(Main *mainvar)
   mem_freen(mainvar);
 }
 
-bool dunemain_is_empty(struct Main *main)
+bool main_is_empty(struct Main *main)
 {
   Id *id_iter;
   FOREACH_MAIN_ID_BEGIN (main, id_iter) {
@@ -528,7 +528,7 @@ ImBuf *main_thumbnail_to_imbuf(Main *main, Thumbnail *data)
 
 void main_thumbnail_create(struct Main *main)
 {
-  MEM_SAFE_FREE(bmain->dune_thumb);
+  MEM_SAFE_FREE(main->tray_thumb);
 
   main->thumb = mem_callocn(THUMB_MEMSIZE(THUMB_SIZE, THUMB_SIZE), __func__);
   main->thumb->width = THUMB_SIZE;
