@@ -182,7 +182,7 @@ void main_free(Main *mainvar)
   mem_freen(mainvar);
 }
 
-bool dune_main_is_empty(struct Main *main)
+bool dunemain_is_empty(struct Main *main)
 {
   Id *id_iter;
   FOREACH_MAIN_ID_BEGIN (main, id_iter) {
