@@ -14,10 +14,10 @@
 #include "types_node.h"
 #include "types_scene.h"
 
-#include "dune_main.h"
-#include "dune_node.h"
+#include "tray_main.h"
+#include "tray_node.h"
 
-#include "dune_idtype.h"
+#include "tray_idtype.h"
 
 // static CLG_LogRef LOG = {"dune.idtype"};
 uint idtype_cache_key_hash(const void *key_v)
@@ -33,7 +33,7 @@ bool idtype_cache_key_cmp(const void *key_a_v, const void *key_b_v)
   const IdCacheKey *key_a = key_a_v;
   const IdCacheKey *key_b = key_b_v;
   return (key_a->id_session_uuid != key_b->id_session_uuid) ||
-         (key_a->offset_in_Id != key_b->offset_in_ID) || (key_a->cache_v != key_b->cache_v);
+         (key_a->offset_in_Id != key_b->offset_in_id) || (key_a->cache_v != key_b->cache_v);
 }
 
 static IdTypeInfo *id_types[INDEX_ID_MAX] = {NULL};
@@ -146,7 +146,7 @@ const char idtype_idcode_to_name_plural(const short idcode)
 
 const char *idtype_idcode_to_lang_cxt(const short idcode)
 {
-  const IdTypeInfo *id_type = dune_idtype_get_info_from_idcode(idcode);
+  const IdTypeInfo *id_type = idtype_get_info_from_idcode(idcode);
   lib_assert(id_type != NULL);
   return id_type != NULL ? id_type->lang_cxt : LANG_CXT_DEFAULT;
 }
@@ -184,7 +184,7 @@ bool idtype_idcode_is_only_appendable(const short idcode)
 
 bool idtype_idcode_append_is_reusable(const short idcode)
 {
-  const IdTypeInfo *id_type = dune_idtype_get_info_from_idcode(idcode);
+  const IdTypeInfo *id_type = idtype_get_info_from_idcode(idcode);
   lib_assert(id_type != NULL);
   if (id_type != NULL && (id_type->flags & IDTYPE_FLAGS_APPEND_IS_REUSABLE) != 0) {
     /* All appendable ID types should also always be linkable. */
@@ -429,7 +429,7 @@ void idtype_id_foreach_cache(struct Id *id,
     type_info = idtype_get_info_from_id(&nodetree->id);
     if (type_info == NULL) {
       /* Very old .tray file seem to have empty names for their embedded node trees, see
-       * `blo_do_versions_250()`. Assume those are nodetrees then. */
+       * `loader_do_versions_250()`. Assume those are nodetrees then. */
       type_info = idtype_get_info_from_idcode(ID_NT);
     }
     if (type_info->foreach_cache != NULL) {
