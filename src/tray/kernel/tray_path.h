@@ -33,7 +33,7 @@ typedef enum ePathForeachFlag {
    *
    * NOTE: Currently this only concerns the weak ref to a lib file stored in
    * `Id::lib_weak_ref. */
-  PATH_TRAVERSE_SKIP_WEAK_REFERENCES = (1 << 5),
+  PATH_TRAVERSE_SKIP_WEAK_REFS = (1 << 5),
 
   /* Flags not affecting the generic DunePath API. Those may be used by specific IdTypeInfo
    * `foreach_path` implementations and/or cbs to implement specific behaviors. */
@@ -172,7 +172,6 @@ void *path_list_backup(struct Main *main, ePathForeachFlag flag);
 void path_list_restore(struct Main *main, ePathForeachFlag flag, void *path_list_handle);
 
 /* Free the temp backup of paths in path_list_handle.
- *
- * note This function assumes that the path list has already been restored with a call to
+ * This fn assumes that the path list has already been restored with a call to
  * path_list_restore, and is therefore empty. */
 void path_list_free(void *path_list_handle);
